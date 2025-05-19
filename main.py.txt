@@ -1,0 +1,35 @@
+from flask import Flask, jsonify
+import requests
+
+app = Flask(__name__)
+
+@app.route("/api/player/elo")
+def get_elo():
+    API_KEY = "be8954d9-9001-4c7a-96f8-3a12635575d1"
+    NICK = "vQz27"
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}"
+    }
+
+    url_player = f"https://open.faceit.com/data/v4/players?nickname={NICK}"
+    res_player = requests.get(url_player, headers=headers)
+    if res_player.status_code != 200:
+        return jsonify({"error": "Error obteniendo ID"}), 400
+
+    player_id = res_player.json()["player_id"]
+
+    url_stats = f"https://open.faceit.com/data/v4/players/{player_id}/stats/cs2"
+    res_stats = requests.get(url_stats, headers=headers)
+    if res_stats.status_code != 200:
+        return jsonify({"error": "Error obteniendo stats"}), 400
+
+    data = res_stats.json()
+    elo = data["lifetime"]["Elo"]
+    level = data["lifetime"]["Faceit Level"]
+
+    return jsonify({
+        "nick": NICK,
+        "elo": elo,
+        "level": level
+    })
